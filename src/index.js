@@ -1,44 +1,56 @@
-import fetchImages from './fetchImages';
 import Notiflix from 'notiflix';
+import ImagesApiService from './ImagesApiService';
+import LoadMoreBtn from './LoadMoreBtn';
 
-// Користувач буде вводити рядок для пошуку у текстове поле, а по сабміту форми необхідно виконувати HTTP-запит.
-
-// 1. Get a link to the form, div.gallery.
-// 2. Add an event listener 'submit' to the form and pass its function fetchImages(value) that executes HTTP the request when the form is submitted
-// 3. Create function fetchImages(value), that gives only result request.
-
-// Елемент div.gallery спочатку міститься в HTML документі, і в нього необхідно рендерити розмітку карток зображень.
-// Під час пошуку за новим ключовим словом необхідно повністю очищати вміст галереї, щоб не змішувати результати.
-// 1. Create function that will render the markup on the query results.
-// 2. Create function that clears the div.gallery before each new request.
 
 const form = document.querySelector('#search-form');
 const boxGallery = document.querySelector('.gallery');
-const btnLoadMore = document.querySelector('.load-more')
+
+
+const imagesApiService = new ImagesApiService();
+const loadMoreBtn = new LoadMoreBtn({
+  selector: '.load-more',
+  hidden: true,
+});
+
+
 
 form.addEventListener('submit', onShowImages);
-// btnLoadMore.addEventListener('click', onShowMoreImages);
+loadMoreBtn.refs.button.addEventListener('click', onShowMoreImages);
+
 
 function onShowImages(event) {
   event.preventDefault();
-  const searchQuery = form.elements.searchQuery.value;
-  console.log(searchQuery);
+  loadMoreBtn.hide()
+  
 
-  fetchImages(searchQuery).then(({hits}) => {
-    console.log(hits);
-    if (hits.length === 0) {
-      Notiflix.Notify.info(
+  imagesApiService.query = event.currentTarget.elements.searchQuery.value;
+
+  
+  imagesApiService.resetPage();
+  imagesApiService.fetchImages().then(images => {
+  
+    console.log(images);
+    if (images.length === 0) {
+      return Notiflix.Notify.info(
         'Sorry, there are no images matching your search query. Please try again.'
       );
-    } else {
+    } 
 
-        renderMarkupImagesCard(hits);
-    }
-  });
+    
+    renderMarkupImagesCard(images);
+    loadMoreBtn.show()
+  }); 
+}
+
+function onShowMoreImages(event) {
+  event.preventDefault();
+  imagesApiService.fetchImages().then(renderMarkupImagesCard);
+
 }
 
 function renderMarkupImagesCard(images) {
-    clearBoxGallery();
+  clearBoxGallery();
   const markupImagesCard = images.map(
     ({
       webformatURL,
@@ -51,7 +63,7 @@ function renderMarkupImagesCard(images) {
     }) => {
       return `
         <div class="photo-card">
-         <img src="${webformatURL}" alt="${tags}" loading="lazy" />
+         <img src="${webformatURL}" alt="${tags}" loading="lazy" width=50px />
          <div class="info">
            <p class="info-item"><b>Likes: ${likes}</b></p>
            <p class="info-item"><b>Views: ${views}</b></p>
@@ -61,7 +73,7 @@ function renderMarkupImagesCard(images) {
     }
   ).join('');
 
-  return boxGallery.innerHTML = markupImagesCard;
+  return boxGallery.insertAdjacentHTML("beforeend", markupImagesCard);
 }
 
 
