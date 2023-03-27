@@ -1,4 +1,6 @@
 import Notiflix from 'notiflix';
+import SimpleLightbox from "simplelightbox";
+import "simplelightbox/dist/simple-lightbox.min.css";
 import ImagesApiService from './ImagesApiService';
 import LoadMoreBtn from './LoadMoreBtn';
 
@@ -12,7 +14,6 @@ const loadMoreBtn = new LoadMoreBtn({
   selector: '.load-more',
   hidden: true,
 });
-
 
 
 form.addEventListener('submit', onShowImages);
@@ -39,6 +40,10 @@ function onShowImages(event) {
       `Hooray! We found ${totalHits} images.`
     );
     renderMarkupImagesCard(hits);
+    lightBox = new SimpleLightbox('.gallery a', {
+      captionsData: 'alt',
+      captionDelay: 250,
+    }).refresh();
     loadMoreBtn.show()
     
   }); 
@@ -49,7 +54,13 @@ function onShowImages(event) {
 function onShowMoreImages(event) {
   event.preventDefault();
   
-  imagesApiService.fetchImages().then(({hits, total, totalHits}) => renderMarkupImagesCard(hits));
+  imagesApiService.fetchImages().then(({hits, total, totalHits}) => {
+    renderMarkupImagesCard(hits)
+    lightBox = new SimpleLightbox('.gallery a', {
+      captionsData: 'alt',
+      captionDelay: 250,
+    }).refresh();
+  });
 
 }
 
@@ -66,17 +77,19 @@ function renderMarkupImagesCard(images) {
       downloads,
     }) => {
       return `
+      <a href="${largeImageURL}">
         <div class="photo-card">
-         <img src="${webformatURL}" alt="${tags}" loading="lazy" width=250px />
+        <img src="${webformatURL}" alt="${tags}" loading="lazy" width=250px />
          <div class="info">
            <p class="info-item"><b>Likes: ${likes}</b></p>
            <p class="info-item"><b>Views: ${views}</b></p>
            <p class="info-item"><b>Comments: ${comments}</b></p>
            <p class="info-item"><b>Downloads: ${downloads}</b></p></div>
-        </div>`;
+        </div></a>`;
     }
   ).join('');
 
+  
   return boxGallery.insertAdjacentHTML("beforeend", markupImagesCard);
 }
 
