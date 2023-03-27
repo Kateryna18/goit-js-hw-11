@@ -27,14 +27,18 @@ function onShowImages(event) {
   imagesApiService.query = event.currentTarget.elements.searchQuery.value;
   imagesApiService.resetPage();
   
-  imagesApiService.fetchImages().then(images => {
-    if (images.length === 0) {
+  imagesApiService.fetchImages().then(({hits, total, totalHits}) => {
+    
+    if (hits.length === 0) {
       return Notiflix.Notify.info(
         'Sorry, there are no images matching your search query. Please try again.'
       );
     } 
 
-    renderMarkupImagesCard(images);
+    Notiflix.Notify.info(
+      `Hooray! We found ${totalHits} images.`
+    );
+    renderMarkupImagesCard(hits);
     loadMoreBtn.show()
     
   }); 
@@ -45,11 +49,12 @@ function onShowImages(event) {
 function onShowMoreImages(event) {
   event.preventDefault();
   
-  imagesApiService.fetchImages().then(renderMarkupImagesCard);
+  imagesApiService.fetchImages().then(({hits, total, totalHits}) => renderMarkupImagesCard(hits));
 
 }
 
 function renderMarkupImagesCard(images) {
+  console.log(images);
   const markupImagesCard = images.map(
     ({
       webformatURL,
